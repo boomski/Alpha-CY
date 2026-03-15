@@ -1,15 +1,19 @@
-import requests
+from playwright.sync_api import sync_playwright
 import re
 
-url = "https://www.alphacyprus.com.cy/live"
+URL = "https://www.alphacyprus.com.cy/live"
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+with sync_playwright() as p:
+    browser = p.firefox.launch(headless=True)
+    page = browser.new_page()
 
-r = requests.get(url, headers=headers)
+    page.goto(URL, wait_until="networkidle")
 
-match = re.search(r'https://l4\.cloudskep\.com/alphacyp/acy/playlist\.m3u8\?wmsAuthSign=[^\'"]+', r.text)
+    html = page.content()
+
+    browser.close()
+
+match = re.search(r'https://l4\.cloudskep\.com/alphacyp/acy/playlist\.m3u8\?wmsAuthSign=[^\'"]+', html)
 
 if match:
     stream = match.group(0)
@@ -19,7 +23,6 @@ if match:
     with open("alpha.m3u8", "w") as f:
         f.write(playlist)
 
-    print("Playlist gemaakt:", stream)
-
+    print("Nieuwe stream:", stream)
 else:
     print("Stream niet gevonden")
